@@ -1,0 +1,38 @@
+import pandas as pd
+import mysql.connector
+
+# Conexão com o banco
+conexao = mysql.connector.connect(
+    host="",
+    user="",
+    password="",
+    database=""
+)
+#Aqui seria o E (Extrair do banco), aonde podemos criar os comandos de dentro do banco de dados para exeutar
+cursor = conexao.cursor()
+cursor.execute("SELECT * FROM produtos_loja")
+resultados = cursor.fetchall()
+
+# Pegando os nomes das colunas
+colunas = [desc[0] for desc in cursor.description]
+df = pd.DataFrame(resultados, columns=colunas)
+
+# Transformações
+df = df.dropna(subset=["preco"])
+df["nome_produto"] = df["nome_produto"].str.title()
+df["categoria"] = df["categoria"].replace({
+    "Esportes": "Esportinho",
+    "Eletrônicos": "Eletronicos"
+})
+df["ano_cadastro"] = pd.to_datetime(df["data_cadastro"]).dt.year
+
+# Exportar para Excel
+df.to_excel("produto_teste.xlsx", index=False)
+
+print("Arquivo Excel gerado com sucesso!")
+
+# Mostrar os 5 primeiros
+print(df.head(20))
+
+cursor.close()
+conexao.close()
